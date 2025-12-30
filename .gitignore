@@ -1,0 +1,18 @@
+# Root .gitignore
+
+# Maven
+scm-server/target/
+maven_tool/
+
+# Node
+scm-client/node_modules/
+scm-client/.next/
+scm-client/out/
+scm-client/build/
+scm-client/.DS_Store
+*.log
+.vscode/
+
+# Environment
+.env
+.env.local
