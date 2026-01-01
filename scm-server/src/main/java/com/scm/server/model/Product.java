@@ -35,6 +35,9 @@ public class Product {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(nullable = true)
+    private BigDecimal costPrice;
+
     @Column(nullable = false)
     private Integer minStockLevel;
 

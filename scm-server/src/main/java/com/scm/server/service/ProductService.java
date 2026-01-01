@@ -17,7 +17,10 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final SupplierRepository supplierRepository;
 
-    public List<Product> getAllProducts() {
+    public List<Product> getAllProducts(UUID supplierId) {
+        if (supplierId != null) {
+            return productRepository.findBySupplierId(supplierId);
+        }
         return productRepository.findAll();
     }
 
@@ -40,6 +43,7 @@ public class ProductService {
         product.setCategory(productDetails.getCategory());
         product.setQuantity(productDetails.getQuantity());
         product.setPrice(productDetails.getPrice());
+        product.setCostPrice(productDetails.getCostPrice());
         product.setMinStockLevel(productDetails.getMinStockLevel());
         product.setSupplier(productDetails.getSupplier());
         return productRepository.save(product);

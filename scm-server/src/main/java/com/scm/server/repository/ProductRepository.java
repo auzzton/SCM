@@ -13,4 +13,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     // Find products with quantity less than or equal to minStockLevel
     @Query("SELECT p FROM Product p WHERE p.quantity <= p.minStockLevel")
     List<Product> findLowStockProducts();
+
+    List<Product> findBySupplierId(UUID supplierId);
 }

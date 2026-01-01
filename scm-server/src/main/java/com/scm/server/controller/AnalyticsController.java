@@ -8,8 +8,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
-
 @RestController
 @RequestMapping("/api/analytics")
 @RequiredArgsConstructor
@@ -19,7 +17,7 @@ public class AnalyticsController {
 
     @GetMapping("/summary")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
-    public ResponseEntity<Map<String, Object>> getSummary() {
-        return ResponseEntity.ok(analyticsService.getSummary());
+    public ResponseEntity<com.scm.server.dto.FinancialMetricsDTO> getFinancialMetrics() {
+        return ResponseEntity.ok(analyticsService.getFinancialMetrics());
     }
 }

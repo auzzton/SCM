@@ -22,29 +22,46 @@ export default function CreateOrderPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Fetch Suppliers and Products first
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const [suppliersRes, productsRes] = await Promise.all([
-                    api.get('/suppliers'),
-                    api.get('/products')
-                ]);
-                setSuppliers(suppliersRes.data);
-                setProducts(productsRes.data);
-            } catch (error) {
-                console.error("Failed to load data", error);
-            }
-        };
-        fetchData();
-    }, []);
-
     const { register, control, handleSubmit, watch, setValue } = useForm<OrderFormValues>({
         defaultValues: {
             supplierId: '',
             items: [{ productId: '', quantity: 1 }]
         }
     });
+
+    const selectedSupplierId = watch('supplierId');
+
+    // Fetch Suppliers first
+    useEffect(() => {
+        const fetchSuppliers = async () => {
+            try {
+                const { data } = await api.get('/suppliers');
+                setSuppliers(data);
+            } catch (error) {
+                console.error("Failed to load suppliers", error);
+            }
+        };
+        fetchSuppliers();
+    }, []);
+
+    // Fetch Products when Supplier Changes
+    useEffect(() => {
+        const fetchProducts = async () => {
+            if (!selectedSupplierId) {
+                setProducts([]);
+                return;
+            }
+            try {
+                const { data } = await api.get(`/products?supplierId=${selectedSupplierId}`);
+                setProducts(data);
+                // Reset items when supplier changes to avoid invalid products
+                setValue('items', [{ productId: '', quantity: 1 }]);
+            } catch (error) {
+                console.error("Failed to load products", error);
+            }
+        };
+        fetchProducts();
+    }, [selectedSupplierId, setValue]);
 
     const { fields, append, remove } = useFieldArray({
         control,

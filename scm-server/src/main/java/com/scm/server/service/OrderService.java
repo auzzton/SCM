@@ -68,6 +68,7 @@ public class OrderService {
                     .product(product)
                     .quantity(itemRequest.getQuantity())
                     .unitPrice(product.getPrice()) // Using current product price as cost
+                    .cost(product.getCostPrice() != null ? product.getCostPrice() : BigDecimal.ZERO)
                     .build();
 
             order.getItems().add(orderItem);
