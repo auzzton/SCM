@@ -104,6 +104,43 @@ public class OrderService {
     }
 
     @Transactional
+    public Order updateOrder(UUID id, OrderRequest request) {
+        Order order = getOrder(id);
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Only pending orders can be updated");
+        }
+
+        Supplier supplier = supplierRepository.findById(request.getSupplierId())
+                .orElseThrow(() -> new RuntimeException("Supplier not found"));
+        order.setSupplier(supplier);
+
+        // Clear existing items
+        order.getItems().clear();
+
+        BigDecimal totalAmount = BigDecimal.ZERO;
+
+        for (OrderRequest.OrderItemRequest itemRequest : request.getItems()) {
+            Product product = productRepository.findById(itemRequest.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found"));
+
+            OrderItem orderItem = OrderItem.builder()
+                    .order(order)
+                    .product(product)
+                    .quantity(itemRequest.getQuantity())
+                    .unitPrice(product.getPrice())
+                    .cost(product.getCostPrice() != null ? product.getCostPrice() : BigDecimal.ZERO)
+                    .build();
+
+            order.getItems().add(orderItem);
+            totalAmount = totalAmount.add(product.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity())));
+        }
+
+        order.setTotalAmount(totalAmount);
+        return orderRepository.save(order);
+    }
+
+    @Transactional
     public void deleteOrder(UUID id) {
         orderRepository.deleteById(id);
     }

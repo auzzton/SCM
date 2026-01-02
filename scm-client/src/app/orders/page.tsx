@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Order } from '@/types';
-import { Plus, Search, Eye, Trash2 } from 'lucide-react';
+import { Plus, Search, Eye, Trash2, Edit } from 'lucide-react';
 import Link from 'next/link';
 import { clsx } from 'clsx';
 
@@ -90,22 +90,36 @@ export default function OrderPage() {
                                     </span>
                                 </td>
                                 <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                                    <button
-                                        onClick={async () => {
-                                            if (confirm('Are you sure you want to delete this order?')) {
-                                                try {
-                                                    await api.delete(`/orders/${order.id}`);
-                                                    setOrders(orders.filter(o => o.id !== order.id));
-                                                } catch (err) {
-                                                    console.error('Failed to delete order', err);
-                                                    alert('Failed to delete order');
+                                    <div className="flex justify-end gap-2">
+                                        {/* Edit Button - Only for Pending Orders */}
+                                        {order.status === 'PENDING' && (
+                                            <Link
+                                                href={`/orders/${order.id}/edit`}
+                                                className="text-blue-600 hover:text-blue-900"
+                                                title="Edit Order"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </Link>
+                                        )}
+
+                                        <button
+                                            onClick={async () => {
+                                                if (confirm('Are you sure you want to delete this order?')) {
+                                                    try {
+                                                        await api.delete(`/orders/${order.id}`);
+                                                        setOrders(orders.filter(o => o.id !== order.id));
+                                                    } catch (err) {
+                                                        console.error('Failed to delete order', err);
+                                                        alert('Failed to delete order');
+                                                    }
                                                 }
-                                            }
-                                        }}
-                                        className="text-red-600 hover:text-red-900"
-                                    >
-                                        <Trash2 className="h-4 w-4" />
-                                    </button>
+                                            }}
+                                            className="text-red-600 hover:text-red-900"
+                                            title="Delete Order"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
