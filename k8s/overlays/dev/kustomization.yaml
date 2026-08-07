@@ -1,0 +1,64 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: scm
+
+resources:
+  - ../../
+
+# ── Dev overlay patches ──────────────────────────────────────
+# Runs 1 replica of each service (cheaper for dev EKS clusters)
+patches:
+  - target:
+      kind: Deployment
+      name: scm-server
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: IfNotPresent
+  - target:
+      kind: Deployment
+      name: scm-client
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+      - op: replace
+        path: /spec/template/spec/containers/0/imagePullPolicy
+        value: IfNotPresent
+  # Disable HPA in dev (conflicts with fixed replica count)
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: scm-server-hpa
+    patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 2
+
+# ── Dev-specific ConfigMap overrides ────────────────────────
+configMapGenerator:
+  - name: scm-config
+    behavior: merge
+    literals:
+      - LOGGING_LEVEL_COM_SCM=DEBUG
+      - SPRING_JPA_SHOW_SQL=true
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=host.docker.internal:9092
+
+# ── Map AWS ECR placeholders to local built images ──────────
+images:
+  - name: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/scm-server
+    newName: scm-server
+    newTag: latest
+  - name: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/scm-client
+    newName: scm-client
+    newTag: latest
+
+namePrefix: ""
+nameSuffix: ""

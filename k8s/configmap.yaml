@@ -1,0 +1,25 @@
+# ============================================================
+# Non-sensitive configuration shared across all services.
+# Sensitive values (DB passwords, JWT keys) go in Secrets.
+# ============================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scm-config
+data:
+  # Spring / JPA
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+
+  # Kafka bootstrap — replace with your MSK endpoint in production
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "kafka-broker.scm.svc.cluster.local:9092"
+
+  # Actuator
+  MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: "health,info,prometheus"
+
+  # Logging
+  LOGGING_LEVEL_COM_SCM: "INFO"
+  LOGGING_LEVEL_ROOT: "WARN"
+
+  # CORS — comma-separated list of allowed frontend origins
+  CORS_ALLOWED_ORIGINS: "https://scm.yourdomain.com"

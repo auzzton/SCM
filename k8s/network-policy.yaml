@@ -1,0 +1,81 @@
+# ============================================================
+# NetworkPolicy — Default deny-all ingress in scm namespace
+#
+# This is applied first to block all pod-to-pod communication
+# by default. Individual allow rules below open only what is
+# explicitly needed, following zero-trust network principles.
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: scm
+spec:
+  podSelector: {}   # Selects ALL pods in the namespace
+  policyTypes:
+    - Ingress
+---
+# ============================================================
+# NetworkPolicy — Allow ALB → scm-server (port 8080)
+# The ALB Ingress Controller runs in kube-system and forwards
+# traffic to pods directly (target-type: ip).
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-alb-to-scm-server
+  namespace: scm
+spec:
+  podSelector:
+    matchLabels:
+      app: scm-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8080
+---
+# ============================================================
+# NetworkPolicy — Allow ALB → scm-client (port 3000)
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-alb-to-scm-client
+  namespace: scm
+spec:
+  podSelector:
+    matchLabels:
+      app: scm-client
+  policyTypes:
+    - Ingress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 3000
+---
+# ============================================================
+# NetworkPolicy — Allow Prometheus → scm-server (scraping)
+# Prometheus runs in the monitoring namespace and scrapes
+# /actuator/prometheus on port 8080.
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-prometheus-scrape
+  namespace: scm
+spec:
+  podSelector:
+    matchLabels:
+      app: scm-server
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8080

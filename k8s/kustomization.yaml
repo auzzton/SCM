@@ -1,0 +1,24 @@
+# ============================================================
+# Kustomize — Base kustomization
+#
+# Root configuration including all shared resource blueprints.
+# ============================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  - pdb.yaml
+  - network-policy.yaml
+  - ingress.yaml
+  - scm-server/deployment.yaml
+  - scm-server/service.yaml
+  - scm-server/hpa.yaml
+  - scm-client/deployment.yaml
+  - scm-client/service.yaml
+
+commonLabels:
+  managed-by: kustomize
+  project: scm

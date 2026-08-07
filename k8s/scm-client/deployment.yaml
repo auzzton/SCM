@@ -1,0 +1,66 @@
+# ============================================================
+# scm-client — Deployment
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scm-client
+  namespace: scm
+  labels:
+    app: scm-client
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: scm-client
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: scm-client
+        tier: frontend
+    spec:
+      terminationGracePeriodSeconds: 15
+      containers:
+        - name: scm-client
+          image: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/scm-client:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+
+          env:
+            # In K8s, this points to the internal ClusterIP of scm-server
+            # Browsers make requests to this URL, so use the PUBLIC ingress URL.
+            - name: NEXT_PUBLIC_API_URL
+              value: "https://api.scm.yourdomain.com/api"
+            - name: HOSTNAME
+              value: "0.0.0.0"
+
+          # Next.js standalone server readiness
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 20
+            periodSeconds: 20

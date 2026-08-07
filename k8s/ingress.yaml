@@ -1,0 +1,70 @@
+# ============================================================
+# Kubernetes Ingress — AWS ALB Ingress Controller
+#
+# Prerequisites:
+#   1. AWS Load Balancer Controller installed on EKS cluster
+#      (https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html)
+#   2. ACM Certificate ARN for your domain
+#   3. Replace <ACM_CERT_ARN> and domain names below.
+# ============================================================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: scm-ingress
+  namespace: scm
+  annotations:
+    # AWS ALB Controller annotations
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+
+    # TLS termination at the load balancer using ACM
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: <ACM_CERT_ARN>
+
+    # Health check paths for the ALB target groups
+    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+
+    # Security: restrict to HTTPS only
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-2-2021-06
+
+spec:
+  rules:
+    # ── API backend: api.scm.yourdomain.com/api/** ──────────
+    - host: api.scm.yourdomain.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: scm-server-svc
+                port:
+                  number: 80
+          - path: /actuator
+            pathType: Prefix
+            backend:
+              service:
+                name: scm-server-svc
+                port:
+                  number: 80
+          - path: /swagger-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: scm-server-svc
+                port:
+                  number: 80
+
+    # ── Frontend: scm.yourdomain.com ────────────────────────
+    - host: scm.yourdomain.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: scm-client-svc
+                port:
+                  number: 80

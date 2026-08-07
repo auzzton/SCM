@@ -1,0 +1,20 @@
+# ============================================================
+# scm-server — Service (ClusterIP, internal only)
+# The Ingress routes external traffic here via path prefix.
+# ============================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: scm-server-svc
+  namespace: scm
+  labels:
+    app: scm-server
+spec:
+  type: ClusterIP
+  selector:
+    app: scm-server
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP

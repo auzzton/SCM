@@ -1,0 +1,30 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: scm
+
+resources:
+  - ../../k8s
+
+# ── Production overlay patches ───────────────────────────────
+# Uses the base replica counts (2 each) and the full HPA range.
+# Image tags are replaced by the CI/CD pipeline using:
+#   kustomize edit set image scm-server=<ECR>:sha-<GIT_SHA>
+#   kustomize edit set image scm-client=<ECR>:sha-<GIT_SHA>
+
+images:
+  - name: scm-server
+    newName: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/scm-server
+    newTag: latest   # Replaced by CI/CD pipeline with Git SHA tag
+  - name: scm-client
+    newName: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/scm-client
+    newTag: latest   # Replaced by CI/CD pipeline with Git SHA tag
+
+# ── Production ConfigMap overrides ──────────────────────────
+configMapGenerator:
+  - name: scm-config
+    behavior: merge
+    literals:
+      - LOGGING_LEVEL_COM_SCM=INFO
+      - SPRING_JPA_SHOW_SQL=false
+      - CORS_ALLOWED_ORIGINS=https://scm.yourdomain.com
