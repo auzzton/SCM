@@ -1,0 +1,194 @@
+name: SCM — Build, Test & Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel any in-progress run for the same ref (avoids stale deploys)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  EKS_CLUSTER_NAME: scm-cluster
+  IMAGE_TAG: sha-${{ github.sha }}
+
+# ─────────────────────────────────────────────────────────────
+# JOB 1: Test the Spring Boot backend
+# ─────────────────────────────────────────────────────────────
+jobs:
+  test-backend:
+    name: "Backend — Maven Tests"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scm-server
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: "maven"
+
+      - name: Run unit & integration tests
+        run: mvn clean verify -B
+        env:
+          # Use H2 in-memory for unit tests (configure a test application.yml)
+          SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+          SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
+          SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.H2Dialect
+          JWT_SECRET: test-secret-key-for-ci-pipeline-only-256bit
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-reports
+          path: scm-server/target/surefire-reports/
+
+# ─────────────────────────────────────────────────────────────
+# JOB 2: Test the Next.js frontend
+# ─────────────────────────────────────────────────────────────
+  test-frontend:
+    name: "Frontend — Lint & Type Check"
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: scm-client
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: scm-client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type-check
+        run: npx tsc --noEmit
+
+      - name: ESLint check
+        run: npm run lint
+
+# ─────────────────────────────────────────────────────────────
+# JOB 3: Build & push Docker images to AWS ECR
+#   Only runs on pushes to main (not PRs)
+# ─────────────────────────────────────────────────────────────
+  build-and-push:
+    name: "Docker — Build & Push to ECR"
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    permissions:
+      id-token: write   # Required for OIDC authentication with AWS
+      contents: read
+
+    strategy:
+      matrix:
+        include:
+          - service: scm-server
+            image_name: scm-server
+            context: ./scm-server
+          - service: scm-client
+            image_name: scm-client
+            context: ./scm-client
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Authenticate with AWS using OIDC — no long-lived keys stored in GitHub
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-scm-ecr-push
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push ${{ matrix.image_name }}
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          push: true
+          # Tag with both the git SHA (immutable) and latest (floating)
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ matrix.image_name }}:${{ env.IMAGE_TAG }}
+            ${{ env.ECR_REGISTRY }}/${{ matrix.image_name }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+# ─────────────────────────────────────────────────────────────
+# JOB 4: Deploy updated images to EKS
+# ─────────────────────────────────────────────────────────────
+  deploy:
+    name: "K8s — Deploy to EKS"
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production  # Requires manual approval gate in GitHub Environments
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-scm-eks-deploy
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig for EKS
+        run: |
+          aws eks update-kubeconfig \
+            --region ${{ env.AWS_REGION }} \
+            --name ${{ env.EKS_CLUSTER_NAME }}
+
+      - name: Install Kustomize
+        uses: imranismail/setup-kustomize@v2
+
+      # Update image tags in the production overlay using Kustomize
+      # (no manual YAML editing — kustomize tracks this in kustomization.yaml)
+      - name: Set image tags in production overlay
+        working-directory: k8s/overlays/production
+        run: |
+          kustomize edit set image \
+            scm-server=${{ env.ECR_REGISTRY }}/scm-server:${{ env.IMAGE_TAG }}
+          kustomize edit set image \
+            scm-client=${{ env.ECR_REGISTRY }}/scm-client:${{ env.IMAGE_TAG }}
+
+      - name: Apply Kubernetes manifests via Kustomize
+        run: |
+          kubectl apply -k k8s/overlays/production
+          kubectl apply -f k8s/pdb.yaml
+          kubectl apply -f k8s/network-policy.yaml
+
+      - name: Wait for rollout to complete
+        run: |
+          kubectl rollout status deployment/scm-server -n scm --timeout=180s
+          kubectl rollout status deployment/scm-client -n scm --timeout=180s

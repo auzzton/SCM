@@ -1,0 +1,98 @@
+# ============================================================
+# scm-server — Deployment
+# ============================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scm-server
+  namespace: scm
+  labels:
+    app: scm-server
+    tier: backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: scm-server
+  # Rolling update: always keep 1 pod available during deploy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: scm-server
+        tier: backend
+      annotations:
+        # Prometheus auto-scrape annotations
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port: "8080"
+    spec:
+      # Graceful shutdown: give Spring Boot 30s to drain connections
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: scm-server
+          # CI/CD pipeline replaces :latest with :sha-<GIT_SHA>
+          image: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/scm-server:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+
+          # ── Resource limits ───────────────────────────────
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+
+          # ── Environment: non-sensitive from ConfigMap ─────
+          envFrom:
+            - configMapRef:
+                name: scm-config
+
+          # ── Environment: sensitive from Secret ───────────
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: scm-secrets
+                  key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: scm-secrets
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: scm-secrets
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: scm-secrets
+                  key: JWT_SECRET
+
+          # ── Liveness probe: restart if JVM is hung ────────
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            failureThreshold: 3
+
+          # ── Readiness probe: only route traffic when ready ─
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3

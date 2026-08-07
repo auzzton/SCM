@@ -1,11 +1,13 @@
 package com.scm.server.service;
 
 import com.scm.server.dto.OrderRequest;
+import com.scm.server.event.OrderStateChangedEvent;
 import com.scm.server.model.*;
 import com.scm.server.repository.OrderRepository;
 import com.scm.server.repository.ProductRepository;
 import com.scm.server.repository.SupplierRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -22,6 +25,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ProductRepository productRepository;
     private final SupplierRepository supplierRepository;
+    private final OrderEventProducer orderEventProducer;
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
@@ -82,16 +86,17 @@ public class OrderService {
     @Transactional
     public Order updateOrderStatus(UUID id, OrderStatus status) {
         Order order = getOrder(id);
+        OrderStatus previousStatus = order.getStatus();
 
-        if (order.getStatus() != OrderStatus.COMPLETED && status == OrderStatus.COMPLETED) {
-            // Order is being completed, INCREASE stock (Purchase Order logic)
+        if (previousStatus != OrderStatus.COMPLETED && status == OrderStatus.COMPLETED) {
+            // Purchase Order completed — INCREASE stock (inbound logistics)
             for (OrderItem item : order.getItems()) {
                 Product product = item.getProduct();
                 product.setQuantity(product.getQuantity() + item.getQuantity());
                 productRepository.save(product);
             }
-        } else if (order.getStatus() == OrderStatus.COMPLETED && status != OrderStatus.COMPLETED) {
-            // Reverting completion? Decrease stock back.
+        } else if (previousStatus == OrderStatus.COMPLETED && status != OrderStatus.COMPLETED) {
+            // Reverting completion — DECREASE stock back
             for (OrderItem item : order.getItems()) {
                 Product product = item.getProduct();
                 product.setQuantity(product.getQuantity() - item.getQuantity());
@@ -100,7 +105,44 @@ public class OrderService {
         }
 
         order.setStatus(status);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+
+        // Publish Kafka event AFTER DB commit so consumers always read consistent state
+        publishOrderStateChangedEvent(saved, previousStatus);
+
+        return saved;
+    }
+
+    /**
+     * Builds and dispatches an OrderStateChangedEvent to Kafka.
+     * Called post-transaction so the event reflects the committed DB state.
+     */
+    private void publishOrderStateChangedEvent(Order order, OrderStatus previousStatus) {
+        try {
+            List<OrderStateChangedEvent.OrderItemPayload> itemPayloads = order.getItems().stream()
+                    .map(item -> OrderStateChangedEvent.OrderItemPayload.builder()
+                            .productId(item.getProduct().getId())
+                            .quantity(item.getQuantity())
+                            .unitPrice(item.getUnitPrice())
+                            .build())
+                    .toList();
+
+            OrderStateChangedEvent event = OrderStateChangedEvent.builder()
+                    .eventId(UUID.randomUUID())
+                    .orderId(order.getId())
+                    .supplierId(order.getSupplier().getId())
+                    .previousStatus(previousStatus.name())
+                    .newStatus(order.getStatus().name())
+                    .changedAt(LocalDateTime.now())
+                    .items(itemPayloads)
+                    .build();
+
+            orderEventProducer.publishOrderStateChanged(event);
+        } catch (Exception e) {
+            // Kafka publish failure MUST NOT roll back the DB transaction.
+            // Log it for alerting — consider a dead-letter outbox table for production.
+            log.error("[Kafka] Failed to publish event for orderId={}: {}", order.getId(), e.getMessage(), e);
+        }
     }
 
     @Transactional

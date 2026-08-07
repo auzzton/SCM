@@ -36,8 +36,10 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/v3/api-docs/**",
+                                "/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html")
+                                "/swagger-ui.html",
+                                "/actuator/**")
                         .permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -49,8 +51,16 @@ public class SecurityConfig {
 
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
+        // Read allowed origins from environment variable.
+        // Set CORS_ALLOWED_ORIGINS in docker-compose.yml or K8s ConfigMap.
+        // Defaults to localhost for local development.
+        String originsEnv = System.getenv("CORS_ALLOWED_ORIGINS");
+        java.util.List<String> origins = (originsEnv != null && !originsEnv.isBlank())
+                ? java.util.Arrays.asList(originsEnv.split(","))
+                : java.util.List.of("http://localhost:3000");
+
         org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
-        configuration.setAllowedOrigins(java.util.List.of("http://localhost:3000")); // Allow Next.js frontend
+        configuration.setAllowedOrigins(origins);
         configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(java.util.List.of("*"));
         configuration.setAllowCredentials(true);

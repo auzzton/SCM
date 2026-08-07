@@ -1,0 +1,231 @@
+# ============================================================
+#  SCM Local Development Stack
+#  Usage: docker-compose up --build
+# ============================================================
+
+version: "3.9"
+
+# ─── Shared network ────────────────────────────────────────
+networks:
+  scm-net:
+    driver: bridge
+
+# ─── Persistent volumes ────────────────────────────────────
+volumes:
+  pgdata:
+  pgadmin-data:
+  kafka-data:
+
+services:
+
+  # ──────────────────────────────────────────────────────────
+  # 1. PostgreSQL (single instance — multi-schema in dev)
+  # ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: scm-postgres
+    networks:
+      - scm-net
+    environment:
+      POSTGRES_USER: scm_admin
+      POSTGRES_PASSWORD: scm_password
+      POSTGRES_DB: scm_dev             # default DB (Hibernate auto-creates tables)
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scm_admin -d scm_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────────────────
+  # 2. pgAdmin — Web-based Postgres GUI
+  #    URL: http://localhost:5050
+  #    Login: admin@scm.local / admin
+  # ──────────────────────────────────────────────────────────
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: scm-pgadmin
+    user: root
+    networks:
+      - scm-net
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@scm.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ──────────────────────────────────────────────────────────
+  # 3. Zookeeper (Kafka dependency)
+  # ──────────────────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: scm-zookeeper
+    networks:
+      - scm-net
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────────────────
+  # 4. Kafka Broker
+  #    External address for local clients: host.docker.internal:9092
+  #    Internal address for containers:    kafka:29092
+  # ──────────────────────────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: scm-kafka
+    networks:
+      - scm-net
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://host.docker.internal:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ──────────────────────────────────────────────────────────
+  # 5. Kafka UI (Provectus)
+  #    URL: http://localhost:8090
+  # ──────────────────────────────────────────────────────────
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: scm-kafka-ui
+    networks:
+      - scm-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: scm-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+
+  # ──────────────────────────────────────────────────────────
+  # 6. Spring Boot Backend
+  #    URL: http://localhost:8080/api
+  #    Swagger UI: http://localhost:8080/swagger-ui.html
+  # ──────────────────────────────────────────────────────────
+  scm-server:
+    build:
+      context: ./scm-server
+      dockerfile: Dockerfile
+    container_name: scm-server
+    networks:
+      - scm-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # Database
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/scm_dev
+      SPRING_DATASOURCE_USERNAME: scm_admin
+      SPRING_DATASOURCE_PASSWORD: scm_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      # Kafka
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # JWT (override in production via AWS Secrets Manager)
+      JWT_SECRET: ${JWT_SECRET:-please-change-this-to-a-256-bit-secret-in-production}
+      JWT_EXPIRATION_MS: 86400000
+      # Actuator
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,prometheus
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ──────────────────────────────────────────────────────────
+  # 7. Next.js Frontend
+  #    URL: http://localhost:3000
+  # ──────────────────────────────────────────────────────────
+  scm-client:
+    build:
+      context: ./scm-client
+      dockerfile: Dockerfile
+    container_name: scm-client
+    networks:
+      - scm-net
+    depends_on:
+      scm-server:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api
+      NODE_ENV: production
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────────────
+  # 8. Prometheus — Metrics scraper
+  #    URL: http://localhost:9090
+  # ──────────────────────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: scm-prometheus
+    networks:
+      - scm-net
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - scm-server
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+
+  # ──────────────────────────────────────────────────────────
+  # 9. Grafana — Dashboards
+  #    URL: http://localhost:3001
+  #    Login: admin / admin
+  # ──────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: scm-grafana
+    networks:
+      - scm-net
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    depends_on:
+      - prometheus

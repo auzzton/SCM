@@ -13,6 +13,24 @@ scm-client/.DS_Store
 *.log
 .vscode/
 
-# Environment
+# Environment — NEVER commit real credentials
 .env
 .env.local
+.env.production
+
+# Docker volumes (created by docker-compose up)
+pgdata/
+kafka-data/
+pgadmin-data/
+
+# Kubernetes — keep the template, never commit applied secrets with real values
+# (use Option A: AWS Secrets Manager CSI Driver for production)
+k8s/secrets-applied.yaml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Archives
+*.tar
+

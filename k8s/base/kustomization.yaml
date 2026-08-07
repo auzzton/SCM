@@ -1,0 +1,29 @@
+# ============================================================
+# Kustomize — Base kustomization
+#
+# Includes all shared manifests. Overlays patch on top of this.
+# Apply base directly:   kubectl apply -k k8s/base/
+# Apply production:      kubectl apply -k k8s/overlays/production/
+# Apply dev:             kubectl apply -k k8s/overlays/dev/
+# ============================================================
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: scm
+
+resources:
+  - ../namespace.yaml
+  - ../configmap.yaml
+  - ../secrets.yaml
+  - ../pdb.yaml
+  - ../network-policy.yaml
+  - ../ingress.yaml
+  - ../scm-server/deployment.yaml
+  - ../scm-server/service.yaml
+  - ../scm-server/hpa.yaml
+  - ../scm-client/deployment.yaml
+  - ../scm-client/service.yaml
+
+commonLabels:
+  managed-by: kustomize
+  project: scm

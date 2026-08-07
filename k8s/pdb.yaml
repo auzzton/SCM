@@ -1,0 +1,32 @@
+# ============================================================
+# PodDisruptionBudget — scm-server
+#
+# Guarantees at least 1 pod stays available during:
+#   - Node drains (kubectl drain during K8s upgrades)
+#   - Cluster Autoscaler scale-downs
+#   - Voluntary disruptions
+# ============================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: scm-server-pdb
+  namespace: scm
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: scm-server
+---
+# ============================================================
+# PodDisruptionBudget — scm-client
+# ============================================================
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: scm-client-pdb
+  namespace: scm
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: scm-client

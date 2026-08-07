@@ -51,13 +51,19 @@ public class AuthenticationService {
 
     // Create initial admin if not exists
     public void createInitialAdmin() {
-        if (repository.count() == 0) {
+        var adminOpt = repository.findByUsername("admin");
+        if (adminOpt.isEmpty()) {
             register(AuthDto.RegisterRequest.builder()
                     .username("admin")
                     .password("admin123")
                     .role(Role.ADMIN)
                     .build());
             System.out.println("Initial Admin created: admin / admin123");
+        } else {
+            var admin = adminOpt.get();
+            admin.setPassword(passwordEncoder.encode("admin123"));
+            repository.save(admin);
+            System.out.println("Initial Admin password reset to: admin123");
         }
     }
 }
