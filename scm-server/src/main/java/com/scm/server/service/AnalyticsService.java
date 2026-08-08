@@ -20,6 +20,46 @@ public class AnalyticsService {
         private final SupplierRepository supplierRepository;
         private final UserRepository userRepository;
 
+        public Map<String, java.math.BigDecimal> getRevenueTrends(int days) {
+                java.time.LocalDateTime startDate = java.time.LocalDateTime.now().minusDays(days);
+                List<com.scm.server.model.Order> orders = orderRepository.findAll().stream()
+                                .filter(o -> o.getOrderDate().isAfter(startDate))
+                                .collect(java.util.stream.Collectors.toList());
+
+                Map<String, java.math.BigDecimal> trends = new java.util.TreeMap<>(); // Sorted by date
+                java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+
+                for (com.scm.server.model.Order order : orders) {
+                        String dateKey = order.getOrderDate().format(formatter);
+                        trends.putIfAbsent(dateKey, java.math.BigDecimal.ZERO);
+                        trends.merge(dateKey, order.getTotalAmount(), java.math.BigDecimal::add);
+                }
+                return trends;
+        }
+
+        public List<com.scm.server.model.Product> getLowStockProducts() {
+                return productRepository.findAll().stream()
+                                .filter(p -> p.getQuantity() <= p.getMinStockLevel())
+                                .collect(java.util.stream.Collectors.toList());
+        }
+
+        public List<Map<String, Object>> getCategoryDistribution() {
+                Map<String, Long> countMap = productRepository.findAll().stream()
+                                .filter(p -> p.getCategory() != null)
+                                .collect(java.util.stream.Collectors.groupingBy(
+                                                com.scm.server.model.Product::getCategory,
+                                                java.util.stream.Collectors.counting()));
+
+                List<Map<String, Object>> result = new java.util.ArrayList<>();
+                countMap.forEach((cat, count) -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("name", cat);
+                        map.put("value", count);
+                        result.add(map);
+                });
+                return result;
+        }
+
         public Map<String, Object> getSummary() {
                 return new HashMap<>(); // Deprecated, redirect to getFinancialSummary
         }

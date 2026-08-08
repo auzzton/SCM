@@ -20,4 +20,23 @@ public class AnalyticsController {
     public ResponseEntity<com.scm.server.dto.FinancialMetricsDTO> getFinancialMetrics() {
         return ResponseEntity.ok(analyticsService.getFinancialMetrics());
     }
+
+    @GetMapping("/trends")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<java.util.Map<String, java.math.BigDecimal>> getRevenueTrends(
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "30") int days) {
+        return ResponseEntity.ok(analyticsService.getRevenueTrends(days));
+    }
+
+    @GetMapping("/inventory/low-stock")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<java.util.List<com.scm.server.model.Product>> getLowStockProducts() {
+        return ResponseEntity.ok(analyticsService.getLowStockProducts());
+    }
+
+    @GetMapping("/categories")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
+    public ResponseEntity<java.util.List<java.util.Map<String, Object>>> getCategoryDistribution() {
+        return ResponseEntity.ok(analyticsService.getCategoryDistribution());
+    }
 }
