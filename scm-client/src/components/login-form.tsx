@@ -125,7 +125,11 @@ export function LoginForm({
               )}
             </div>
 
-            <Button type="submit" disabled={isLoading} className="w-full flex justify-center items-center mt-2 bg-blue-600 hover:bg-blue-700 text-white border-0">
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full flex justify-center items-center mt-1 bg-emerald-600 hover:bg-emerald-500 text-white border-0 shadow-lg shadow-emerald-900/40 transition-all duration-200"
+            >
               {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Login'}
             </Button>
           </div>
