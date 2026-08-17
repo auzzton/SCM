@@ -266,4 +266,14 @@ The Swagger UI is available at:
 - **Local:** `http://localhost:8080/swagger-ui.html`
 - **Production:** `https://api.scm.yourdomain.com/swagger-ui.html`
 
+---
+
+## 🎨 Modern Web UI & Animations
+
+The frontend client utilizes modern web standards to provide a premium user experience:
+- **WebGL Shader Backgrounds:** Custom pulsing border effects rendered directly on the GPU for zero CPU overhead.
+- **Glassmorphism:** Frosted-glass translucent panel interfaces styled using Tailwind CSS backdrop filters.
+- **Micro-Animations:** Fluid transitions and active-state scaling across inputs, buttons, and custom layout vectors.
+
+
 
