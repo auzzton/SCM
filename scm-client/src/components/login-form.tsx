@@ -69,12 +69,14 @@ export function LoginForm({
       {...props}
     >
       <CardHeader>
-        <CardTitle className="text-white">Login to your account</CardTitle>
-        <CardDescription className="text-zinc-400">
+        <CardTitle className="text-white text-lg">Login to your account</CardTitle>
+        <CardDescription className="text-zinc-400 text-xs">
           Enter your username below to login to your account
         </CardDescription>
         <CardAction>
-          <Button variant="link" className="text-xs p-0 h-auto text-blue-400 hover:text-blue-300">Sign Up</Button>
+          <Button variant="link" className="text-xs p-0 h-auto text-emerald-400 hover:text-emerald-300">
+            Sign Up
+          </Button>
         </CardAction>
       </CardHeader>
       <CardContent>
