@@ -55,7 +55,8 @@ export function LoginForm({
       setToken(token);
       setUser({ sub: data.username, role });
       router.push('/dashboard');
-    } catch (err: any) {
+    } catch (err: unknown) {
+      void err;
       setError('Invalid username or password');
     } finally {
       setIsLoading(false);
