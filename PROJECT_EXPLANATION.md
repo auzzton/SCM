@@ -79,8 +79,9 @@ Choosing the right tool is a core engineering skill. Below is the rationale for 
 ### **5. Global State Management: Zustand**
 *   **Why Zustand?** Redux introduces an excessive amount of boilerplate (actions, reducers, types). Zustand is ultra-lightweight, uses a hook-based API, and includes a built-in `persist` middleware which automatically saves the login state and JWT token inside `localStorage`.
 
-### **6. Visuals & Styling: Recharts & Tailwind CSS v4**
+### **6. Visuals & Styling: Recharts, WebGL Shaders & Tailwind CSS v4**
 *   **Why Recharts?** React-native SVG chart components that fit directly into JSX structures, making it extremely easy to render dynamic line, bar, and pie charts using backend API data.
+*   **Why WebGL Shaders?** Used to render high-fidelity, interactive, custom pulsing border animation effects natively on the GPU (via React custom component), bypassing traditional CPU-bound styling mechanisms for optimal page loading performance.
 *   **Why Tailwind CSS v4?** Utility-first CSS framework that lets you build bespoke, responsive interfaces without writing traditional CSS files.
 
 ---
