@@ -81,7 +81,7 @@ export function LoginForm({
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5">
             {error && (
               <div className="rounded-md bg-red-950/50 border border-red-900/50 p-3 text-xs text-red-300">
                 {error}
