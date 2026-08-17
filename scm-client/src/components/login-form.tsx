@@ -105,23 +105,23 @@ export function LoginForm({
             
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password" className="text-zinc-300">Password</Label>
+                <Label htmlFor="password" className="text-zinc-300 text-xs">Password</Label>
                 <a
                   href="#"
-                  className="ml-auto inline-block text-xs text-zinc-400 hover:text-blue-400 underline-offset-4 hover:underline"
+                  className="ml-auto inline-block text-xs text-zinc-500 hover:text-emerald-400 underline-offset-4 hover:underline transition-colors"
                 >
                   Forgot your password?
                 </a>
               </div>
-              <Input 
-                id="password" 
-                type="password" 
-                required 
-                className="bg-zinc-900 border-zinc-800 text-white focus-visible:ring-blue-500"
+              <Input
+                id="password"
+                type="password"
+                required
+                className="bg-zinc-900/80 border-zinc-800 text-white focus-visible:ring-emerald-500/50 focus-visible:border-emerald-700"
                 {...register('password')}
               />
               {errors.password && (
-                <p className="text-xs text-red-400 mt-1">{errors.password.message}</p>
+                <p className="text-xs text-red-400">{errors.password.message}</p>
               )}
             </div>
 
