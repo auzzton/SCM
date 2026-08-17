@@ -136,9 +136,13 @@ export function LoginForm({
         </form>
       </CardContent>
       <CardFooter className="flex-col gap-2">
-        <Button variant="outline" type="button" className="w-full flex justify-center gap-2 border-zinc-800 bg-transparent text-white hover:bg-zinc-900 hover:text-white">
+        <Button
+          variant="outline"
+          type="button"
+          className="w-full flex justify-center gap-2 border-zinc-800 bg-transparent text-white hover:bg-zinc-900 hover:text-white transition-colors"
+        >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="size-4 fill-current">
-            <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 12.24 12.24s5.033 11.24 11.24 11.24c6.478 0 10.793-4.537 10.793-10.986 0-.746-.08-1.32-.176-1.886H12.24z"/>
+            <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 1.607 6.033 1.607 12s4.426 11 10.633 11c6.478 0 10.793-4.537 10.793-10.986 0-.746-.08-1.32-.176-1.886H12.24z"/>
           </svg>
           Login with Google
         </Button>
