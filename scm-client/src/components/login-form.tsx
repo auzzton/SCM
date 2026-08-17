@@ -64,7 +64,10 @@ export function LoginForm({
   };
 
   return (
-    <Card className="w-full max-w-sm bg-zinc-950/80 border-zinc-800 text-white" {...props}>
+    <Card
+      className="w-full max-w-sm border border-emerald-900/40 bg-black/70 text-white backdrop-blur-xl shadow-2xl shadow-emerald-950/60"
+      {...props}
+    >
       <CardHeader>
         <CardTitle className="text-white">Login to your account</CardTitle>
         <CardDescription className="text-zinc-400">
