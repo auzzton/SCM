@@ -89,17 +89,17 @@ export function LoginForm({
             )}
             
             <div className="grid gap-2">
-              <Label htmlFor="username" className="text-zinc-300">Username</Label>
+              <Label htmlFor="username" className="text-zinc-300 text-xs">Username</Label>
               <Input
                 id="username"
                 type="text"
                 placeholder="username"
                 required
-                className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-blue-500"
+                className="bg-zinc-900/80 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-emerald-500/50 focus-visible:border-emerald-700"
                 {...register('username')}
               />
               {errors.username && (
-                <p className="text-xs text-red-400 mt-1">{errors.username.message}</p>
+                <p className="text-xs text-red-400">{errors.username.message}</p>
               )}
             </div>
             
