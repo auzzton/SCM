@@ -65,16 +65,21 @@ export function LoginForm({
 
   return (
     <Card
-      className="w-full max-w-sm border border-emerald-900/40 bg-black/70 text-white backdrop-blur-xl shadow-2xl shadow-emerald-950/60"
+      className="w-full max-w-sm text-white backdrop-blur-xl shadow-2xl"
+      style={{
+        background: 'linear-gradient(135deg, #1a133099 0%, #2e205080 100%)',
+        border: '1px solid #9a99e130',
+        boxShadow: '0 25px 60px #020003cc, 0 0 40px #9043d520',
+      }}
       {...props}
     >
       <CardHeader>
         <CardTitle className="text-white text-lg">Login to your account</CardTitle>
-        <CardDescription className="text-zinc-400 text-xs">
+        <CardDescription style={{ color: 'var(--muted-foreground)', fontSize: '0.75rem' }}>
           Enter your username below to login to your account
         </CardDescription>
         <CardAction>
-          <Button variant="link" className="text-xs p-0 h-auto text-emerald-400 hover:text-emerald-300">
+          <Button variant="link" className="text-xs p-0 h-auto" style={{ color: 'var(--secondary-accent)' }}>
             Sign Up
           </Button>
         </CardAction>
@@ -83,19 +88,29 @@ export function LoginForm({
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="flex flex-col gap-5">
             {error && (
-              <div className="rounded-md bg-red-950/50 border border-red-900/50 p-3 text-xs text-red-300">
+              <div
+                className="rounded-md p-3 text-xs"
+                style={{ background: '#3d0a1a80', border: '1px solid #e0607e40', color: '#f48fb1' }}
+              >
                 {error}
               </div>
             )}
             
             <div className="grid gap-2">
-              <Label htmlFor="username" className="text-zinc-300 text-xs">Username</Label>
+              <Label htmlFor="username" className="text-xs" style={{ color: 'var(--foreground-muted)' }}>Username</Label>
               <Input
                 id="username"
                 type="text"
                 placeholder="username"
                 required
-                className="bg-zinc-900/80 border-zinc-800 text-white placeholder:text-zinc-600 focus-visible:ring-emerald-500/50 focus-visible:border-emerald-700"
+                className="text-white placeholder:text-zinc-600"
+                style={{
+                  background: '#1e153580',
+                  border: '1px solid #2e2050',
+                  outline: 'none',
+                }}
+                onFocus={e => (e.currentTarget.style.border = '1px solid #9a99e180')}
+                onBlur={e  => (e.currentTarget.style.border = '1px solid #2e2050')}
                 {...register('username')}
               />
               {errors.username && (
@@ -105,10 +120,13 @@ export function LoginForm({
             
             <div className="grid gap-2">
               <div className="flex items-center">
-                <Label htmlFor="password" className="text-zinc-300 text-xs">Password</Label>
+                <Label htmlFor="password" className="text-xs" style={{ color: 'var(--foreground-muted)' }}>Password</Label>
                 <a
                   href="#"
-                  className="ml-auto inline-block text-xs text-zinc-500 hover:text-emerald-400 underline-offset-4 hover:underline transition-colors"
+                  className="ml-auto inline-block text-xs underline-offset-4 hover:underline transition-colors"
+                  style={{ color: 'var(--muted-foreground)' }}
+                  onMouseEnter={e => ((e.target as HTMLElement).style.color = '#be74be')}
+                  onMouseLeave={e => ((e.target as HTMLElement).style.color = 'var(--muted-foreground)')}
                 >
                   Forgot your password?
                 </a>
@@ -117,7 +135,13 @@ export function LoginForm({
                 id="password"
                 type="password"
                 required
-                className="bg-zinc-900/80 border-zinc-800 text-white focus-visible:ring-emerald-500/50 focus-visible:border-emerald-700"
+                className="text-white"
+                style={{
+                  background: '#1e153580',
+                  border: '1px solid #2e2050',
+                }}
+                onFocus={e => (e.currentTarget.style.border = '1px solid #9a99e180')}
+                onBlur={e  => (e.currentTarget.style.border = '1px solid #2e2050')}
                 {...register('password')}
               />
               {errors.password && (
@@ -127,8 +151,15 @@ export function LoginForm({
 
             <Button
               type="submit"
+              id="login-submit-btn"
               disabled={isLoading}
-              className="w-full flex justify-center items-center mt-1 bg-emerald-600 hover:bg-emerald-500 text-white border-0 shadow-lg shadow-emerald-900/40 transition-all duration-200"
+              className="w-full flex justify-center items-center mt-1 text-white border-0 shadow-lg transition-all duration-200"
+              style={{
+                background: 'var(--grad-primary)',
+                boxShadow: '0 4px 20px #9043d540',
+              }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.88')}
+              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
             >
               {isLoading ? <Loader2 className="animate-spin h-4 w-4" /> : 'Login'}
             </Button>
@@ -139,7 +170,13 @@ export function LoginForm({
         <Button
           variant="outline"
           type="button"
-          className="w-full flex justify-center gap-2 border-zinc-800 bg-transparent text-white hover:bg-zinc-900 hover:text-white transition-colors"
+          className="w-full flex justify-center gap-2 text-white hover:text-white transition-colors"
+          style={{
+            background: 'transparent',
+            border: '1px solid #2e2050',
+          }}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#9a99e110')}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="size-4 fill-current">
             <path d="M12.24 10.285V13.4h6.887c-.275 1.565-1.88 4.604-6.887 4.604-4.33 0-7.866-3.577-7.866-8s3.536-8 7.866-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 6.033 1 1.607 6.033 1.607 12s4.426 11 10.633 11c6.478 0 10.793-4.537 10.793-10.986 0-.746-.08-1.32-.176-1.886H12.24z"/>

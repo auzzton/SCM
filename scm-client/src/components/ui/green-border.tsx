@@ -250,30 +250,32 @@ void main() {
 `
 
 const UNIFORMS = {
+  // Purple/violet gradient palette
+  // Hex refs: #020003 #010e6b #4d3f72 #9043d5 #9a99e1 #be74be #c7a3d2 #f5edf0
   colors: [
-    [0, 0, 0],
-    [0.25098039215686274, 1, 0],
-    [0, 1, 0.06666666666666667],
-    [0.27058823529411763, 0.5607843137254902, 0],
-    [0.07450980392156863, 0.3764705882352941, 0.10196078431372549],
-    [0.07450980392156863, 0.3764705882352941, 0.10196078431372549],
-    [0.07450980392156863, 0.3764705882352941, 0.10196078431372549],
-    [0.07450980392156863, 0.3764705882352941, 0.10196078431372549],
+    [0.008, 0.0,   0.012],  // #020003  near-black violet
+    [0.004, 0.055, 0.420],  // #010e6b  deep navy
+    [0.302, 0.247, 0.447],  // #4d3f72  dark violet
+    [0.565, 0.263, 0.835],  // #9043d5  electric purple
+    [0.604, 0.600, 0.882],  // #9a99e1  periwinkle
+    [0.745, 0.455, 0.745],  // #be74be  mauve pink
+    [0.780, 0.639, 0.824],  // #c7a3d2  soft lavender
+    [0.961, 0.929, 0.941],  // #f5edf0  near-white lavender
   ] as [number, number, number][],
-  colorCount: 5,
+  colorCount: 8,
   scale: 1.34,
-  intensity: 0.9,
+  intensity: 1.05,
   paramA: 0.07,
   warp: 0.0,
   detail: 1.824,
-  contrast: 1.311,
-  brightness: 0.02,
-  saturation: 1.04,
-  hue: 0.5236,
-  vignette: 0.0,
+  contrast: 1.18,
+  brightness: 0.04,
+  saturation: 1.2,
+  hue: 0.0,
+  vignette: 0.25,
   blur: 0.0016,
-  grain: 0.052,
-  seed: 6304.0,
+  grain: 0.038,
+  seed: 4217.0,
   rotate: 3.1416,
   offsetX: 0.0,
   offsetY: 0.0,
@@ -283,7 +285,7 @@ const UNIFORMS = {
   cursorStrength: 1.0,
   cursorRadius: 0.664,
   oklab: 1.0,
-  timeScale: 0.214,
+  timeScale: 0.18,
 }
 
 const pendingContextReleases = new WeakMap<HTMLCanvasElement, number>()

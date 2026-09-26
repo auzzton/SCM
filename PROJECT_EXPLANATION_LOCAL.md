@@ -1,6 +1,6 @@
-# Supply Chain Management (SCM) System - Detailed Project Profile
+# Supply Chain Management (SCM) System - Detailed Project Profile (Local / Core Stack)
 
-This document provides a comprehensive technical overview of the Supply Chain Management (SCM) project. It is structured to serve as an in-depth project walkthrough, technical rationale catalog, and interview preparation guide.
+This document provides a comprehensive technical overview of the Supply Chain Management (SCM) project without cloud infrastructure details, focusing on core full-stack software development.
 
 ---
 

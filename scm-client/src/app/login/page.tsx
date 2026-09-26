@@ -16,12 +16,18 @@ export default function LoginPage() {
         {/* Top nav bar */}
         <header className="flex items-center justify-between px-8 py-6">
           <a href="#" className="flex items-center gap-2.5 font-semibold text-white">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-emerald-500 shadow-lg shadow-emerald-500/40">
-              <GalleryVerticalEnd className="size-4 text-black" />
+            <div
+              className="flex size-7 items-center justify-center rounded-lg shadow-lg"
+              style={{
+                background: 'var(--grad-primary)',
+                boxShadow: '0 4px 15px #9043d540',
+              }}
+            >
+              <GalleryVerticalEnd className="size-4 text-white" />
             </div>
-            <span className="text-sm tracking-tight">NexSCM Inc.</span>
+            <span className="text-sm tracking-tight gradient-text font-bold">NexSCM Inc.</span>
           </a>
-          <p className="font-mono text-[10px] text-zinc-500">v1.4.2-PROD</p>
+          <p className="font-mono text-[10px]" style={{ color: 'var(--muted-foreground)' }}>v1.4.2-PROD</p>
         </header>
 
         {/* Centered form */}
@@ -33,7 +39,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <footer className="px-8 py-5 text-center">
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
             &copy; 2026 NexSCM Inc. All rights reserved.
           </p>
         </footer>

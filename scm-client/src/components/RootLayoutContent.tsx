@@ -14,9 +14,15 @@ export default function RootLayoutContent({
 
     return (
         <AuthGuard>
-            <div className="flex min-h-screen bg-gray-50">
+            <div
+                className="flex min-h-screen"
+                style={{ background: 'var(--background)' }}
+            >
                 {!isPublic && <Sidebar />}
-                <main className={`flex-1 overflow-auto ${!isPublic ? 'p-8' : ''}`}>
+                <main
+                    className={`flex-1 overflow-auto ${!isPublic ? 'p-8' : ''}`}
+                    style={{ background: 'var(--background)' }}
+                >
                     {children}
                 </main>
             </div>

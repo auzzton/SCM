@@ -1,56 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import "tailwindcss";
 
+/* ── Gradient Style Palette ─────────────────────────────────────────────────
+   Derived from the purple/violet gradient reference image.
+   Key hex values: #f5edf0 · #9a99e1 · #008bd0 · #c7a3d2 · #be74be
+                   #9043d5 · #4d3f72 · #010e6b · #020003
+── */
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
-  --primary: #2563eb;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #3b82f6;
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Backgrounds */
+  --background:           #0a0612;   /* near-black violet base */
+  --surface:              #110d1e;   /* card / panel surface */
+  --surface-2:            #1a1330;   /* slightly elevated surface */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f8fafc;
-    --primary: #3b82f6;
-    --primary-foreground: #ffffff;
-    --secondary: #1e293b;
-    --secondary-foreground: #f8fafc;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --border: #334155;
-    --input: #334155;
-    --ring: #60a5fa;
-  }
+  /* Foregrounds */
+  --foreground:           #f0ecff;   /* near-white lavender */
+  --foreground-muted:     #b8a8d0;   /* muted lavender text */
+
+  /* Primary accent — vivid violet */
+  --primary:              #9a99e1;   /* periwinkle violet */
+  --primary-vivid:        #9043d5;   /* electric purple */
+  --primary-foreground:   #ffffff;
+
+  /* Secondary accent — mauve / pink-purple */
+  --secondary:            #1a1330;
+  --secondary-accent:     #be74be;   /* mauve pink */
+  --secondary-foreground: #f0ecff;
+
+  /* Muted */
+  --muted:                #1e1535;
+  --muted-foreground:     #9085ab;
+
+  /* Borders */
+  --border:               #2e2050;   /* subtle violet border */
+  --border-glow:          #9a99e140; /* glowing border tint */
+
+  /* Input */
+  --input:                #1e1535;
+  --ring:                 #9a99e1;
+
+  /* Named gradient stops */
+  --g-lavender:           #f5edf0;
+  --g-periwinkle:         #9a99e1;
+  --g-sky:                #008bd0;
+  --g-mauve:              #c7a3d2;
+  --g-pink:               #be74be;
+  --g-violet:             #9043d5;
+  --g-deep:               #4d3f72;
+  --g-navy:               #010e6b;
+  --g-almost-black:       #020003;
+
+  /* Gradient definitions */
+  --grad-primary:   linear-gradient(135deg, #9043d5 0%, #9a99e1 50%, #be74be 100%);
+  --grad-sidebar:   linear-gradient(180deg, #020003 0%, #0d0920 30%, #1c1040 60%, #2b1f5c 100%);
+  --grad-card:      linear-gradient(135deg, #1a1330cc 0%, #2e2050aa 100%);
+  --grad-accent:    linear-gradient(90deg, #9a99e1 0%, #be74be 100%);
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
+  --color-background:           var(--background);
+  --color-foreground:           var(--foreground);
+  --color-primary:              var(--primary);
+  --color-primary-foreground:   var(--primary-foreground);
+  --color-secondary:            var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
+  --color-muted:                var(--muted);
+  --color-muted-foreground:     var(--muted-foreground);
+  --color-border:               var(--border);
+  --color-input:                var(--input);
+  --color-ring:                 var(--ring);
+  --font-sans:                  var(--font-sans);
+  --font-mono:                  var(--font-mono);
 }
+
+/* ── Base ───────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar styling ─────────────────────────────────────────────────── */
+::-webkit-scrollbar               { width: 6px; height: 6px; }
+::-webkit-scrollbar-track         { background: var(--surface); }
+::-webkit-scrollbar-thumb         { background: var(--border); border-radius: 9999px; }
+::-webkit-scrollbar-thumb:hover   { background: var(--primary); }
+
+/* ── Gradient text utility ─────────────────────────────────────────────── */
+.gradient-text {
+  background: var(--grad-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Glass card utility ────────────────────────────────────────────────── */
+.glass-card {
+  background: var(--grad-card);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 
